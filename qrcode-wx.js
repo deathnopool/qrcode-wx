@@ -990,11 +990,74 @@ var QRCode;
 				}
 			}
 
+			// 绘制中间的 logo 图片（如果设置了）
+			if (_htOption.logo) {
+				this._drawLogo(nOffsetX, nOffsetY);
+			}
+
 			this._bIsPainted = true;
 
 			// 触发绘制完成回调
 			if (typeof _htOption.onRenderingComplete === 'function') {
 				_htOption.onRenderingComplete(_canvas);
+			}
+		};
+
+		/**
+		 * 绘制中间的 logo 图片
+		 * @private
+		 * @param {Number} nOffsetX - 二维码起点 X 偏移量
+		 * @param {Number} nOffsetY - 二维码起点 Y 偏移量
+		 */
+		Drawing.prototype._drawLogo = function (nOffsetX, nOffsetY) {
+			var _ctx = this._ctx;
+			var _htOption = this._htOption;
+			var logo = _htOption.logo;
+			var logoImage = logo.image;
+			var logoWidth = logo.width;
+			var logoHeight = logo.height;
+			var logoRatio = logo.ratio || 0.2; // 默认 logo 占二维码大小的 20%
+
+			// 计算 logo 实际尺寸
+			var qrCodeSize = _htOption.width;
+			var logoActualSize = qrCodeSize * logoRatio;
+
+			// 如果指定了具体的宽高，使用指定的尺寸
+			if (logoWidth && logoHeight) {
+				logoActualSize = logoWidth;
+			} else if (logoWidth) {
+				logoActualSize = logoWidth;
+				logoHeight = logoActualSize; // 保持正方形
+			}
+
+			// 如果只指定了宽度，计算高度
+			if (logoWidth && !logoHeight) {
+				logoHeight = logoWidth;
+			} else if (logoWidth && logoHeight) {
+				// 使用指定尺寸
+			} else {
+				logoWidth = logoActualSize;
+				logoHeight = logoActualSize;
+			}
+
+			// 计算 logo 绘制位置（居中）
+			var logoX = nOffsetX + (qrCodeSize - logoWidth) / 2;
+			var logoY = nOffsetY + (qrCodeSize - logoHeight) / 2;
+
+			// 绘制 logo 背景边框（可选）
+			if (logo.borderColor) {
+				_ctx.fillStyle = logo.borderColor;
+				_ctx.fillRect(
+					logoX - (logo.borderWidth || 2),
+					logoY - (logo.borderWidth || 2),
+					logoWidth + (logo.borderWidth || 2) * 2,
+					logoHeight + (logo.borderWidth || 2) * 2
+				);
+			}
+
+			// 绘制 logo 图片
+			if (logoImage) {
+				_ctx.drawImage(logoImage, logoX, logoY, logoWidth, logoHeight);
 			}
 		};
 
@@ -1084,17 +1147,30 @@ var QRCode;
 	 *     canvas.height = res[0].height * dpr
 	 *     ctx.scale(dpr, dpr)
 	 *
-	 *     new QRCode(ctx, canvas, {
-	 *       text: "https://example.com",
-	 *       width: 200,
-	 *       height: 200,
-	 *       x: 10,
-	 *       y: 10,
-	 *       colorDark: "#000000",
-	 *       colorLight: "#ffffff",
-	 *       canvasBackgroundColor: "#f0f0f0",
-	 *       correctLevel: QRCode.CorrectLevel.H
-	 *     })
+	 *     // 创建 logo 图片对象
+	 *     const logo = new Image()
+	 *     logo.src = '/images/logo.png'
+	 *     logo.onload = () => {
+	 *       new QRCode(ctx, canvas, {
+	 *         text: "https://example.com",
+	 *         width: 200,
+	 *         height: 200,
+	 *         x: 10,
+	 *         y: 10,
+	 *         colorDark: "#000000",
+	 *         colorLight: "#ffffff",
+	 *         canvasBackgroundColor: "#f0f0f0",
+	 *         logo: {
+	 *           image: logo,
+	 *           width: 40,
+	 *           height: 40,
+	 *           ratio: 0.2,
+	 *           borderColor: "#ffffff",
+	 *           borderWidth: 2
+	 *         },
+	 *         correctLevel: QRCode.CorrectLevel.H
+	 *       })
+	 *     }
 	 *   })
 	 *
 	 * @param {Object} ctx - Canvas 2D Context
@@ -1108,6 +1184,13 @@ var QRCode;
 	 * @param {String} [vOption.colorDark="#000000"] 二维码颜色
 	 * @param {String} [vOption.colorLight="#ffffff"] 二维码区域背景颜色
 	 * @param {String} [vOption.canvasBackgroundColor] 整个 Canvas 背景颜色
+	 * @param {Object} [vOption.logo] 中间 logo 配置
+	 * @param {Object} vOption.logo.image 图片对象（微信小程序的 Image 对象）
+	 * @param {Number} [vOption.logo.width] logo 宽度
+	 * @param {Number} [vOption.logo.height] logo 高度
+	 * @param {Number} [vOption.logo.ratio=0.2] logo 占二维码大小的比例
+	 * @param {String} [vOption.logo.borderColor] logo 边框颜色
+	 * @param {Number} [vOption.logo.borderWidth=2] logo 边框宽度
 	 * @param {QRCode.CorrectLevel} [vOption.correctLevel=QRCode.CorrectLevel.H] [L|M|Q|H]
 	 * @param {Function} [vOption.onRenderingComplete] 绘制完成回调
 	 */
@@ -1177,5 +1260,6 @@ var QRCode;
 	 */
 	QRCode.CorrectLevel = QRErrorCorrectLevel;
 })();
+
 
 module.exports = QRCode;
