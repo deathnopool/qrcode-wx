@@ -1177,3 +1177,5 @@ var QRCode;
 	 */
 	QRCode.CorrectLevel = QRErrorCorrectLevel;
 })();
+
+module.exports = QRCode;
